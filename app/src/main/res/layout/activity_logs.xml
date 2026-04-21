@@ -21,10 +21,11 @@
         android:textStyle="bold" />
 
     <ScrollView
+        android:id="@+id/log_scroll_view"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:background="#F0F0F0">
+        android:background="#1E1E1E">
 
         <TextView
             android:id="@+id/log_text"
@@ -32,6 +33,7 @@
             android:layout_height="wrap_content"
             android:fontFamily="monospace"
             android:padding="8dp"
+            android:textColor="#E0E0E0"
             android:textSize="12sp" />
     </ScrollView>
 

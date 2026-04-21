@@ -40,7 +40,12 @@ class LogActivity : AppCompatActivity() {
     }
 
     private fun updateLogs() {
-        val logs = Logger.getLogs(this)
+        val logs = Logger.getLogs(this).reversed()
         binding.logText.text = logs.joinToString("\n")
+        
+        // Scroll to bottom
+        binding.logScrollView.post {
+            binding.logScrollView.fullScroll(android.view.View.FOCUS_DOWN)
+        }
     }
 }

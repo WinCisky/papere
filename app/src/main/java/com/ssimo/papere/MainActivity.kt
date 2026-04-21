@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.BitmapFactory
+import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
@@ -40,8 +41,9 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        binding.viewLogsButton.setOnClickListener {
-            startActivity(Intent(this, LogActivity::class.java))
+        binding.customizeButton.setOnClickListener {
+            startActivity(Intent(this, CustomizeActivity::class.java))
+            Logger.log(this, "MainActivity", "Opening CustomizeActivity")
         }
 
         checkWorkStatus()
@@ -50,6 +52,27 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         loadCurrentWallpaper()
+        updateAttribution()
+    }
+
+    private fun updateAttribution() {
+        val prefs = getSharedPreferences("wallpaper_prefs", Context.MODE_PRIVATE)
+        val author = prefs.getString("attribution_author", null)
+        val license = prefs.getString("attribution_license", null)
+        val descriptionUrl = prefs.getString("attribution_description_url", null)
+
+        if (author != null && license != null) {
+            binding.attributionText.text = "© $author • $license"
+            binding.attributionText.visibility = View.VISIBLE
+            binding.attributionText.setOnClickListener {
+                descriptionUrl?.let { url ->
+                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                    startActivity(intent)
+                }
+            }
+        } else {
+            binding.attributionText.visibility = View.GONE
+        }
     }
 
     private fun loadCurrentWallpaper() {
@@ -98,17 +121,42 @@ class MainActivity : AppCompatActivity() {
                 
                 if (hasPermissions()) {
                     if (isActive) {
-                        binding.statusText.text = "active"
+                        binding.statusText.text = "ACTIVE"
                         binding.statusText.setTextColor(ContextCompat.getColor(this, R.color.green))
                         binding.actionButton.text = "Deactivate"
+                        updateNextChangeTime()
                     } else {
-                        binding.statusText.text = "inactive"
+                        binding.statusText.text = "INACTIVE"
                         binding.statusText.setTextColor(ContextCompat.getColor(this, R.color.red))
                         binding.actionButton.text = "Activate"
+                        binding.nextChangeText.visibility = View.GONE
                     }
                 }
-                loadCurrentWallpaper() // Refresh image when status changes (might have finished a new download)
+                loadCurrentWallpaper()
             })
+    }
+
+    private fun updateNextChangeTime() {
+        val prefs = getSharedPreferences("wallpaper_prefs", Context.MODE_PRIVATE)
+        val nextTime = prefs.getLong("next_execution_time", 0L)
+        
+        if (nextTime > System.currentTimeMillis()) {
+            val remainingMillis = nextTime - System.currentTimeMillis()
+            val minutes = (remainingMillis / 1000 / 60) % 60
+            val hours = (remainingMillis / 1000 / 3600)
+            
+            binding.nextChangeText.text = if (hours > 0) {
+                "Next change in: ${hours}h ${minutes}m"
+            } else {
+                "Next change in: ${minutes}m"
+            }
+            binding.nextChangeText.visibility = View.VISIBLE
+        } else if (nextTime != 0L) {
+            binding.nextChangeText.text = "Next change: Soon"
+            binding.nextChangeText.visibility = View.VISIBLE
+        } else {
+            binding.nextChangeText.visibility = View.GONE
+        }
     }
 
     private fun toggleWallpaperWork() {

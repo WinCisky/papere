@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
@@ -11,11 +12,60 @@
         android:scaleType="centerCrop"
         android:contentDescription="Current Background" />
 
+    <TextView
+        android:id="@+id/attribution_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="48dp"
+        android:background="@drawable/status_background"
+        android:paddingHorizontal="8dp"
+        android:paddingVertical="4dp"
+        android:textColor="@color/white"
+        android:textSize="14sp"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="@+id/background_image"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:text="© Author • License"
+        tools:visibility="visible" />
+
+    <TextView
+        android:id="@+id/status_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="12dp"
+        android:background="@drawable/status_background"
+        android:paddingHorizontal="8dp"
+        android:paddingVertical="2dp"
+        android:text="loading..."
+        android:textColor="@color/white"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toTopOf="@+id/card_view"
+        app:layout_constraintEnd_toEndOf="@+id/card_view" />
+
+
+    <TextView
+        android:id="@+id/next_change_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="12dp"
+        android:background="@drawable/status_background"
+        android:paddingHorizontal="8dp"
+        android:paddingVertical="2dp"
+        android:text="Next change: --:--"
+        android:textColor="#fff"
+        android:textSize="14sp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toTopOf="@+id/card_view"
+        app:layout_constraintStart_toStartOf="@+id/card_view"
+        tools:visibility="visible" />
+
     <com.google.android.material.card.MaterialCardView
+        android:id="@+id/card_view"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom"
-
+        app:layout_constraintBottom_toBottomOf="parent"
         android:layout_margin="24dp"
         app:cardCornerRadius="16dp"
         app:cardElevation="8dp"
@@ -26,25 +76,7 @@
             android:layout_height="wrap_content"
             android:gravity="center"
             android:orientation="vertical"
-            android:background="#CCFFFFFF"
-            android:padding="12dp">
-
-            <TextView
-                android:id="@+id/status_text"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="8dp"
-                android:text="loading..."
-                android:textColor="#616161"
-                android:textSize="16sp" />
-
-            <Button
-                android:id="@+id/action_button"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Action"
-                android:layout_marginBottom="8dp"
-                android:textAllCaps="true"/>
+            android:padding="16dp">
 
             <TextView
                 android:id="@+id/permission_warning"
@@ -56,14 +88,31 @@
                 android:layout_marginBottom="8dp"
                 android:textStyle="italic"/>
 
-            <Button
-                android:id="@+id/view_logs_button"
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="View System Logs"
-                style="@style/Widget.MaterialComponents.Button.TextButton"/>
+                android:orientation="vertical"
+                android:gravity="center">
+
+                <Button
+                    android:id="@+id/action_button"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Activate"
+                    android:textAllCaps="true"/>
+
+                <Button
+                    android:id="@+id/customize_button"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Customize"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:textAllCaps="true"/>
+
+            </LinearLayout>
+
 
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 
-</FrameLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>
