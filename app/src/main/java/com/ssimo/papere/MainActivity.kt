@@ -6,8 +6,11 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.BitmapFactory
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.util.DisplayMetrics
 import android.view.View
+import android.view.WindowManager
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -39,7 +42,7 @@ class MainActivity : AppCompatActivity() {
                 Logger.log(this, "MainActivity", "Permissions not granted, requesting...")
                 requestPermissions()
             }
-        }
+         }
 
         binding.customizeButton.setOnClickListener {
             startActivity(Intent(this, CustomizeActivity::class.java))
@@ -53,6 +56,24 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         loadCurrentWallpaper()
         updateAttribution()
+    }
+
+    fun saveScreenSize(context: Context) {
+        val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
+        val (width, height) = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            val metrics = windowManager.currentWindowMetrics
+            Pair(metrics.bounds.width(), metrics.bounds.height())
+        } else {
+            val displayMetrics = DisplayMetrics()
+            @Suppress("DEPRECATION")
+            windowManager.defaultDisplay.getRealMetrics(displayMetrics)
+            Pair(displayMetrics.widthPixels, displayMetrics.heightPixels)
+        }
+
+        context.getSharedPreferences("wallpaper_prefs", Context.MODE_PRIVATE).edit()
+            .putInt("screen_width", width)
+            .putInt("screen_height", height)
+            .apply()
     }
 
     private fun updateAttribution() {
@@ -168,6 +189,7 @@ class MainActivity : AppCompatActivity() {
                 WallpaperWorker.stopWork(this)
             } else {
                 Logger.log(this, "MainActivity", "Starting new work")
+                saveScreenSize(this)
                 WallpaperWorker.startWork(this)
             }
         }

@@ -56,14 +56,18 @@ class WallpaperWorker(appContext: Context, workerParams: WorkerParameters) :
             Logger.log(applicationContext, TAG, "Image downloaded to: ${imageFile.absolutePath}")
 
             val bitmap = BitmapFactory.decodeFile(imageFile.absolutePath) ?: throw Exception("Decoding failed")
-            
-            val wallpaperManager = WallpaperManager.getInstance(applicationContext)
-            val width = wallpaperManager.desiredMinimumWidth
-            val height = wallpaperManager.desiredMinimumHeight
-            
-            val croppedBitmap = cropBitmap(bitmap, width, height)
 
-            wallpaperManager.setBitmap(croppedBitmap)
+            val wallpaperManager = WallpaperManager.getInstance(applicationContext)
+            val width = sharedPreferences.getInt("screen_width", 1080)
+            val height = sharedPreferences.getInt("screen_height", 1920)
+            wallpaperManager.suggestDesiredDimensions(width, height)
+
+
+            val croppedBitmap = cropBitmap(bitmap, width, height)
+            val visibleCropHint = android.graphics.Rect(0, 0, croppedBitmap.width, croppedBitmap.height)
+            wallpaperManager.setBitmap(croppedBitmap, visibleCropHint, true)
+
+            //wallpaperManager.setBitmap(croppedBitmap)
             Logger.log(applicationContext, TAG, "Wallpaper set successfully")
             
             // Success
