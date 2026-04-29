@@ -5,7 +5,10 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.BitmapFactory
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.net.Uri
+import android.os.BatteryManager
 import android.os.Build
 import android.os.Bundle
 import android.util.DisplayMetrics
@@ -27,13 +30,12 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Logger.log(this, "MainActivity", "Initializing MainActivity")
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
         updateUI()
         loadCurrentWallpaper()
-        
+
         binding.actionButton.setOnClickListener {
             Logger.log(this, "MainActivity", "Action button clicked")
             if (hasPermissions()) {
@@ -46,7 +48,6 @@ class MainActivity : AppCompatActivity() {
 
         binding.customizeButton.setOnClickListener {
             startActivity(Intent(this, CustomizeActivity::class.java))
-            Logger.log(this, "MainActivity", "Opening CustomizeActivity")
         }
 
         checkWorkStatus()
@@ -56,6 +57,7 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         loadCurrentWallpaper()
         updateAttribution()
+        checkWorkStatus()
     }
 
     fun saveScreenSize(context: Context) {
@@ -139,7 +141,7 @@ class MainActivity : AppCompatActivity() {
         WorkManager.getInstance(this).getWorkInfosForUniqueWorkLiveData(WallpaperWorker.UNIQUE_WORK_NAME)
             .observe(this, Observer { workInfos ->
                 val isActive = workInfos?.any { it.state == WorkInfo.State.ENQUEUED || it.state == WorkInfo.State.RUNNING || it.state == WorkInfo.State.BLOCKED } == true
-                
+
                 if (hasPermissions()) {
                     if (isActive) {
                         binding.statusText.text = "ACTIVE"
@@ -157,11 +159,32 @@ class MainActivity : AppCompatActivity() {
             })
     }
 
+    private fun isWifiConnected(): Boolean {
+        val connectivityManager = applicationContext.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val network = connectivityManager.activeNetwork ?: return false
+        val capabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
+        return capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)
+    }
+
+    private fun getBatteryLevel(): Int {
+        val batteryManager = applicationContext.getSystemService(Context.BATTERY_SERVICE) as BatteryManager
+        return batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
+    }
+
     private fun updateNextChangeTime() {
         val prefs = getSharedPreferences("wallpaper_prefs", Context.MODE_PRIVATE)
         val nextTime = prefs.getLong("next_execution_time", 0L)
-        
-        if (nextTime > System.currentTimeMillis()) {
+
+        val requireWifiPreference = prefs.getBoolean("require_wifi", true)
+        val requireBatteryPreference = prefs.getBoolean("require_battery", true)
+
+        if (requireWifiPreference && !isWifiConnected()) {
+            binding.nextChangeText.visibility = View.VISIBLE
+            binding.nextChangeText.text = "Waiting for Wifi"
+        } else if (requireBatteryPreference && getBatteryLevel() < 50) {
+            binding.nextChangeText.visibility = View.VISIBLE
+            binding.nextChangeText.text = "Charge your phone"
+        } else if (nextTime > System.currentTimeMillis()) {
             val remainingMillis = nextTime - System.currentTimeMillis()
             val minutes = (remainingMillis / 1000 / 60) % 60
             val hours = (remainingMillis / 1000 / 3600)

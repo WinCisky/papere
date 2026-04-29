@@ -13,24 +13,37 @@
         android:contentDescription="Current Background"
         android:foreground="?android:attr/scrollbarTrackVertical"
         android:foregroundGravity="center"
-        android:scaleType="centerCrop" />
+        android:scaleType="centerCrop"
+        tools:layout_editor_absoluteX="-40dp"
+        tools:layout_editor_absoluteY="16dp" />
 
-    <TextView
-        android:id="@+id/attribution_text"
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="48dp"
-        android:background="@drawable/status_background"
-        android:paddingHorizontal="8dp"
-        android:paddingVertical="4dp"
-        android:textColor="@color/white"
-        android:textSize="14sp"
-        android:visibility="gone"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="@+id/background_image"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        tools:text="© Author • License"
-        tools:visibility="visible" />
+        android:layout_marginStart="24dp"
+        android:layout_marginEnd="24dp"
+        android:gravity="center"
+        android:orientation="vertical"
+        >
+
+        <TextView
+            android:id="@+id/attribution_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="48dp"
+            android:background="@drawable/status_background"
+            android:paddingHorizontal="8dp"
+            android:paddingVertical="4dp"
+            android:paddingStart="20dp"
+            android:textColor="@color/white"
+            android:textSize="14sp"
+            android:visibility="gone"
+            tools:text="© Author • License"
+            tools:visibility="visible" />
+    </LinearLayout>
 
     <TextView
         android:id="@+id/status_text"

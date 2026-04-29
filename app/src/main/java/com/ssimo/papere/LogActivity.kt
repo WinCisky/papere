@@ -27,6 +27,7 @@ class LogActivity : AppCompatActivity() {
         }
 
         updateLogs()
+        scrollToBottom()
     }
 
     override fun onResume() {
@@ -42,8 +43,9 @@ class LogActivity : AppCompatActivity() {
     private fun updateLogs() {
         val logs = Logger.getLogs(this).reversed()
         binding.logText.text = logs.joinToString("\n")
-        
-        // Scroll to bottom
+    }
+
+    private fun scrollToBottom() {
         binding.logScrollView.post {
             binding.logScrollView.fullScroll(android.view.View.FOCUS_DOWN)
         }

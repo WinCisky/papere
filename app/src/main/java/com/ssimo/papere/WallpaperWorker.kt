@@ -38,9 +38,11 @@ class WallpaperWorker(appContext: Context, workerParams: WorkerParameters) :
 
         val batteryLevel = getBatteryLevel()
         val wifiConnected = isWifiConnected()
+        val requireWifi = sharedPreferences.getBoolean("require_wifi", true)
+        val requireBattery = sharedPreferences.getBoolean("require_battery", true)
 
-        if (!wifiConnected || batteryLevel <= 50) {
-            Logger.log(applicationContext, TAG, "Conditions not met: WiFi=$wifiConnected, Battery=$batteryLevel%. Postponing for 1h.")
+        if ((requireWifi && !wifiConnected) || (requireBattery && batteryLevel <= 50)) {
+            Logger.log(applicationContext, TAG, "Conditions not met: WiFi=$wifiConnected (Required: $requireWifi), Battery=$batteryLevel% (Required: $requireBattery). Postponing for 1h.")
             scheduleNextWork(1, TimeUnit.HOURS)
             return Result.success()
         }
@@ -279,8 +281,11 @@ class WallpaperWorker(appContext: Context, workerParams: WorkerParameters) :
     private fun scheduleNextWork(delay: Long, unit: TimeUnit) {
         Logger.log(applicationContext, TAG, "Scheduling next work in $delay $unit")
         
+        val requireWifi = sharedPreferences.getBoolean("require_wifi", true)
+        val networkType = if (requireWifi) NetworkType.UNMETERED else NetworkType.CONNECTED
+
         val constraints = Constraints.Builder()
-            .setRequiredNetworkType(NetworkType.CONNECTED)
+            .setRequiredNetworkType(networkType)
             .build()
 
         val workRequest = OneTimeWorkRequestBuilder<WallpaperWorker>()
@@ -301,8 +306,12 @@ class WallpaperWorker(appContext: Context, workerParams: WorkerParameters) :
         const val UNIQUE_WORK_NAME = "WallpaperChangeWork"
         
         fun startWork(context: Context) {
+            val requireWifi = context.getSharedPreferences("wallpaper_prefs", Context.MODE_PRIVATE)
+                .getBoolean("require_wifi", true)
+            val networkType = if (requireWifi) NetworkType.UNMETERED else NetworkType.CONNECTED
+
             val constraints = Constraints.Builder()
-                .setRequiredNetworkType(NetworkType.CONNECTED)
+                .setRequiredNetworkType(networkType)
                 .build()
 
             val workRequest = OneTimeWorkRequestBuilder<WallpaperWorker>()

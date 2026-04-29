@@ -12,35 +12,78 @@
         android:layout_marginBottom="16dp"
         android:text="Back to Home" />
 
-    <TextView
-        android:id="@+id/title_text"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="24dp"
-        android:text="Settings &amp; Customize"
-        android:textSize="24sp"
-        android:textStyle="bold" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="System"
-        android:textSize="18sp"
-        android:textStyle="bold"
-        android:layout_marginBottom="8dp"/>
-
-    <Button
-        android:id="@+id/view_logs_button"
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="View System Logs"
-        style="@style/Widget.MaterialComponents.Button.OutlinedButton"/>
+        android:layout_height="match_parent">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="More options coming soon..."
-        android:layout_marginTop="16dp"
-        android:alpha="0.6"/>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/title_settings_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="24dp"
+                android:text="Settings"
+                android:textSize="24sp"
+                android:textStyle="bold" />
+
+            <com.google.android.material.switchmaterial.SwitchMaterial
+                android:id="@+id/require_wifi_switch"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Update only on WiFi"
+                android:layout_marginBottom="16dp"
+                android:textSize="16sp" />
+
+            <com.google.android.material.switchmaterial.SwitchMaterial
+                android:id="@+id/require_battery_switch"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Update only when charged (>50%)"
+                android:layout_marginBottom="16dp"
+                android:textSize="16sp" />
+
+            <TextView
+                android:id="@+id/title_customize_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="24dp"
+                android:text="Customize"
+                android:textSize="24sp"
+                android:textStyle="bold" />
+
+            <CheckBox android:id="@+id/checkbox_nature"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Nature" />
+            <CheckBox android:id="@+id/checkbox_landscapes"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Landscapes"/>
+            <CheckBox android:id="@+id/checkbox_sunsets"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Sunsets"/>
+            <CheckBox android:id="@+id/checkbox_animals"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Animals"/>
+            <CheckBox android:id="@+id/checkbox_flora"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Flora"/>
+
+            <Button
+                android:id="@+id/view_logs_button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="View System Logs"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"/>
+
+        </LinearLayout>
+    </ScrollView>
 
 </LinearLayout>
