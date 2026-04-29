@@ -11,6 +11,10 @@ import android.net.Uri
 import android.os.BatteryManager
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.net.Network
+import android.net.NetworkRequest
 import android.util.DisplayMetrics
 import android.view.View
 import android.view.WindowManager
@@ -26,7 +30,26 @@ import java.io.File
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
-    private val requiredPermissions = arrayOf(Manifest.permission.SET_WALLPAPER)
+    private val updateTimeHandler = Handler(Looper.getMainLooper())
+    private val updateTimeRunnable = object : Runnable {
+        override fun run() {
+            updateNextChangeTime()
+            updateTimeHandler.postDelayed(this, 60000)
+        }
+    }
+    private val networkCallback = object : ConnectivityManager.NetworkCallback() {
+        override fun onAvailable(network: Network) {
+            runOnUiThread { updateNextChangeTime() }
+        }
+        override fun onLost(network: Network) {
+            runOnUiThread { updateNextChangeTime() }
+        }
+    }
+    private val requiredPermissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        arrayOf(Manifest.permission.SET_WALLPAPER, Manifest.permission.POST_NOTIFICATIONS)
+    } else {
+        arrayOf(Manifest.permission.SET_WALLPAPER)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -58,6 +81,24 @@ class MainActivity : AppCompatActivity() {
         loadCurrentWallpaper()
         updateAttribution()
         checkWorkStatus()
+        
+        updateTimeHandler.post(updateTimeRunnable)
+        val connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val networkRequest = NetworkRequest.Builder()
+            .addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
+            .build()
+        connectivityManager.registerNetworkCallback(networkRequest, networkCallback)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        updateTimeHandler.removeCallbacks(updateTimeRunnable)
+        val connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        try {
+            connectivityManager.unregisterNetworkCallback(networkCallback)
+        } catch (e: Exception) {
+            Logger.log(this, "MainActivity", "Error unregistering network callback: ${e.message}")
+        }
     }
 
     fun saveScreenSize(context: Context) {

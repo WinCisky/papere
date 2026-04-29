@@ -7,8 +7,12 @@ import android.graphics.BitmapFactory
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.os.BatteryManager
+import android.os.Build
 import android.text.Html
+import androidx.core.app.NotificationCompat
 import androidx.work.*
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONObject
@@ -42,22 +46,29 @@ class WallpaperWorker(appContext: Context, workerParams: WorkerParameters) :
         val requireBattery = sharedPreferences.getBoolean("require_battery", true)
 
         if ((requireWifi && !wifiConnected) || (requireBattery && batteryLevel <= 50)) {
-            Logger.log(applicationContext, TAG, "Conditions not met: WiFi=$wifiConnected (Required: $requireWifi), Battery=$batteryLevel% (Required: $requireBattery). Postponing for 1h.")
-            scheduleNextWork(1, TimeUnit.HOURS)
+            Logger.log(applicationContext, TAG, "Conditions not met: WiFi=$wifiConnected (Required: $requireWifi), Battery=$batteryLevel% (Required: $requireBattery). Postponing for 15m.")
+            
+            val nextDelay = 15L
+            val nextUnit = TimeUnit.MINUTES
+            sharedPreferences.edit()
+                .putLong("next_execution_time", System.currentTimeMillis() + nextUnit.toMillis(nextDelay))
+                .apply()
+                
+            scheduleNextWork(nextDelay, nextUnit)
             return Result.success()
         }
 
         val failureCount = sharedPreferences.getInt("failure_count", 0)
 
         try {
-            val imageData = fetchRandomImageData() ?: throw Exception("Failed to fetch image data from Wikimedia")
+            val imageData = fetchRandomImageData()
             val imageUrl = imageData.url
             
             Logger.log(applicationContext, TAG, "Downloading image from: $imageUrl")
-            val imageFile = downloadImage(imageUrl) ?: throw Exception("Download failed")
+            val imageFile = downloadImage(imageUrl)
             Logger.log(applicationContext, TAG, "Image downloaded to: ${imageFile.absolutePath}")
 
-            val bitmap = BitmapFactory.decodeFile(imageFile.absolutePath) ?: throw Exception("Decoding failed")
+            val bitmap = BitmapFactory.decodeFile(imageFile.absolutePath) ?: throw Exception("Decoding failed for file ${imageFile.absolutePath}")
 
             val wallpaperManager = WallpaperManager.getInstance(applicationContext)
             val width = sharedPreferences.getInt("screen_width", 1080)
@@ -77,7 +88,9 @@ class WallpaperWorker(appContext: Context, workerParams: WorkerParameters) :
             return Result.success()
             
         } catch (e: Exception) {
-            Logger.log(applicationContext, TAG, "Error setting wallpaper: " + e.message)
+            val errorMsg = e.message ?: e.toString()
+            val stackTrace = android.util.Log.getStackTraceString(e)
+            Logger.log(applicationContext, TAG, "Error setting wallpaper: $errorMsg\n$stackTrace")
             return onFailure(failureCount)
         }
     }
@@ -90,15 +103,16 @@ class WallpaperWorker(appContext: Context, workerParams: WorkerParameters) :
         val descriptionUrl: String
     )
 
-    private fun fetchRandomImageData(): ImageData? {
-        val categories = listOf(
-            "Category:Featured_pictures_of_nature",
-            "Category:Featured_pictures_of_landscapes",
-            "Category:Featured_pictures_of_sunsets",
-            "Category:Featured_pictures_of_animals",
-            "Category:Featured_pictures_of_flora"
+    private fun fetchRandomImageData(): ImageData {
+        val allCategories = mapOf(
+            "checkbox_nature" to "Category:Featured_pictures_of_nature",
+            "checkbox_landscapes" to "Category:Featured_pictures_of_landscapes",
+            "checkbox_sunsets" to "Category:Featured_pictures_of_sunsets",
+            "checkbox_animals" to "Category:Featured_pictures_of_animals",
+            "checkbox_flora" to "Category:Featured_pictures_of_flora"
         )
-        val category = categories.random()
+        val categories = allCategories.filter { sharedPreferences.getBoolean(it.key, true) }.values.toList()
+        val category = if (categories.isNotEmpty()) categories.random() else "Category:Featured_pictures_of_nature"
         
         // Random date in the past
         val calendar = java.util.Calendar.getInstance()
@@ -141,8 +155,8 @@ class WallpaperWorker(appContext: Context, workerParams: WorkerParameters) :
 
         val request = Request.Builder().url(apiUrl).build()
         val response = client.newCall(request).execute()
-        if (!response.isSuccessful) return null
-        val bodyString = response.body?.string() ?: return null
+        if (!response.isSuccessful) throw Exception("HTTP Error: ${response.code} ${response.message}")
+        val bodyString = response.body?.string() ?: throw Exception("Empty response body")
         val json = JSONObject(bodyString)
 
 
@@ -150,12 +164,12 @@ class WallpaperWorker(appContext: Context, workerParams: WorkerParameters) :
             throw Exception("Wikimedia error: ${json.getJSONObject("error").optString("info")}")
         }
 
-        val pagesArr = json.optJSONObject("query")?.optJSONArray("pages") ?: return null
-        if (pagesArr.length() == 0) return null
+        val pagesArr = json.optJSONObject("query")?.optJSONArray("pages") ?: throw Exception("No pages found in response")
+        if (pagesArr.length() == 0) throw Exception("Pages array is empty")
 
         val randomPage = pagesArr.getJSONObject(Random.nextInt(pagesArr.length()))
-        val imageInfo = randomPage.optJSONArray("imageinfo")?.optJSONObject(0) ?: return null
-        val extMetadata = imageInfo.optJSONObject("extmetadata") ?: return null
+        val imageInfo = randomPage.optJSONArray("imageinfo")?.optJSONObject(0) ?: throw Exception("No imageinfo found")
+        val extMetadata = imageInfo.optJSONObject("extmetadata") ?: throw Exception("No extmetadata found")
 
         val rawArtist = extMetadata.optJSONObject("Artist")?.optString("value") ?: "Unknown"
         val artist = Html.fromHtml(rawArtist, Html.FROM_HTML_MODE_LEGACY).toString().trim()
@@ -163,6 +177,7 @@ class WallpaperWorker(appContext: Context, workerParams: WorkerParameters) :
         val licenseUrl = extMetadata.optJSONObject("LicenseUrl")?.optString("value") ?: ""
         val descriptionUrl = imageInfo.optString("descriptionurl") ?: ""
         val downloadUrl = imageInfo.optString("thumburl").let { if (it.isNullOrEmpty()) imageInfo.optString("url") else it }
+        if (downloadUrl.isNullOrEmpty()) throw Exception("Download URL is empty")
 
         return ImageData(downloadUrl, artist, license, licenseUrl, descriptionUrl)
     }
@@ -179,7 +194,7 @@ class WallpaperWorker(appContext: Context, workerParams: WorkerParameters) :
         return batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
     }
 
-    private fun downloadImage(url: String): File? {
+    private fun downloadImage(url: String): File {
         val request = Request.Builder()
             .url(url)
             .addHeader("Accept", "image/avif,image/webp,image/apng,image/*,*/*;q=0.8")
@@ -188,15 +203,13 @@ class WallpaperWorker(appContext: Context, workerParams: WorkerParameters) :
             .build()
         val response = client.newCall(request).execute()
         if (!response.isSuccessful) {
-            Logger.log(applicationContext, TAG, "Response code: ${response.code}")
-            Logger.log(applicationContext, TAG, "Response message: ${response.message}")
             val errBody = response.body?.string()
-            Logger.log(applicationContext, TAG, "Error body: $errBody")
-            return null
+            throw Exception("Download image HTTP Error: ${response.code} ${response.message}. Body: $errBody")
         }
         
         val file = File(applicationContext.cacheDir, "temp_wallpaper_${System.currentTimeMillis()}.jpg")
-        response.body?.byteStream()?.use { input ->
+        val body = response.body ?: throw Exception("Empty body stream when downloading image")
+        body.byteStream().use { input ->
             FileOutputStream(file).use { output ->
                 input.copyTo(output)
             }
@@ -273,9 +286,34 @@ class WallpaperWorker(appContext: Context, workerParams: WorkerParameters) :
                 .putLong("next_execution_time", 0L)
                 .apply()
             Logger.log(applicationContext, TAG, "Max failures reached. Stopping retries.")
+            sendErrorNotification()
         }
         
         return Result.failure()
+    }
+
+    private fun sendErrorNotification() {
+        val notificationManager = applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val channelId = "wallpaper_error_channel"
+        
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                channelId,
+                "Errori Sfondo",
+                NotificationManager.IMPORTANCE_DEFAULT
+            )
+            notificationManager.createNotificationChannel(channel)
+        }
+
+        val notification = NotificationCompat.Builder(applicationContext, channelId)
+            .setSmallIcon(android.R.drawable.ic_dialog_alert)
+            .setContentTitle("Aggiornamento Sfondo Disabilitato")
+            .setContentText("Troppi fallimenti consecutivi. L'aggiornamento automatico dello sfondo è stato disabilitato. Riattivalo manualmente.")
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setAutoCancel(true)
+            .build()
+
+        notificationManager.notify(1001, notification)
     }
 
     private fun scheduleNextWork(delay: Long, unit: TimeUnit) {
@@ -321,6 +359,7 @@ class WallpaperWorker(appContext: Context, workerParams: WorkerParameters) :
             
             context.getSharedPreferences("wallpaper_prefs", Context.MODE_PRIVATE).edit()
                 .putLong("next_execution_time", System.currentTimeMillis()) // Immediate start
+                .putInt("failure_count", 0)
                 .apply()
 
             WorkManager.getInstance(context).enqueueUniqueWork(

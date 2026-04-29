@@ -14,48 +14,27 @@ class CustomizeActivity : AppCompatActivity() {
         binding = ActivityCustomizeBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        val prefs = getSharedPreferences("wallpaper_prefs", MODE_PRIVATE)
-
-        binding.requireWifiSwitch.isChecked = prefs.getBoolean("require_wifi", true)
-        binding.requireWifiSwitch.setOnCheckedChangeListener { _, isChecked ->
-            prefs.edit().putBoolean("require_wifi", isChecked).apply()
-        }
-
-        binding.requireBatterySwitch.isChecked = prefs.getBoolean("require_battery", true)
-        binding.requireBatterySwitch.setOnCheckedChangeListener { _, isChecked ->
-            prefs.edit().putBoolean("require_battery", isChecked).apply()
-        }
-
-        binding.checkboxNature.isChecked = prefs.getBoolean("checkbox_nature", true)
-        binding.checkboxNature.setOnCheckedChangeListener { _, isChecked ->
-            prefs.edit().putBoolean("checkbox_nature", isChecked).apply()
-        }
-
-        binding.checkboxLandscapes.isChecked = prefs.getBoolean("checkbox_landscapes", true)
-        binding.checkboxLandscapes.setOnCheckedChangeListener { _, isChecked ->
-            prefs.edit().putBoolean("checkbox_landscapes", isChecked).apply()
-        }
-
-        binding.checkboxSunsets.isChecked = prefs.getBoolean("checkbox_sunsets", true)
-        binding.checkboxSunsets.setOnCheckedChangeListener { _, isChecked ->
-            prefs.edit().putBoolean("checkbox_sunsets", isChecked).apply()
-        }
-
-        binding.checkboxAnimals.isChecked = prefs.getBoolean("checkbox_animals", true)
-        binding.checkboxAnimals.setOnCheckedChangeListener { _, isChecked ->
-            prefs.edit().putBoolean("checkbox_animals", isChecked).apply()
-        }
-
-        binding.checkboxFlora.isChecked = prefs.getBoolean("checkbox_flora", true)
-        binding.checkboxFlora.setOnCheckedChangeListener { _, isChecked ->
-            prefs.edit().putBoolean("checkbox_flora", isChecked).apply()
-        }
+        setupPreference(binding.requireWifiSwitch, "require_wifi")
+        setupPreference(binding.requireBatterySwitch, "require_battery")
+        setupPreference(binding.checkboxNature, "checkbox_nature")
+        setupPreference(binding.checkboxLandscapes, "checkbox_landscapes")
+        setupPreference(binding.checkboxSunsets, "checkbox_sunsets")
+        setupPreference(binding.checkboxAnimals, "checkbox_animals")
+        setupPreference(binding.checkboxFlora, "checkbox_flora")
 
         binding.viewLogsButton.setOnClickListener {
             startActivity(Intent(this, LogActivity::class.java))
         }
         binding.backHomeButton.setOnClickListener {
             finish()
+        }
+    }
+
+    private fun setupPreference(compoundButton: android.widget.CompoundButton, key: String, defaultValue: Boolean = true) {
+        val prefs = getSharedPreferences("wallpaper_prefs", MODE_PRIVATE)
+        compoundButton.isChecked = prefs.getBoolean(key, defaultValue)
+        compoundButton.setOnCheckedChangeListener { _, isChecked ->
+            prefs.edit().putBoolean(key, isChecked).apply()
         }
     }
 }

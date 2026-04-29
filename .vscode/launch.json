@@ -1,0 +1,19 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Build & Start App",
+            "type": "node",
+            "request": "launch",
+            "runtimeExecutable": "powershell.exe",
+            "runtimeArgs": [
+                "-ExecutionPolicy",
+                "Bypass",
+                "-File",
+                "${workspaceFolder}\\.vscode\\launch_and_log.ps1"
+            ],
+            "preLaunchTask": "installDebug",
+            "console": "integratedTerminal"
+        }
+    ]
+}
