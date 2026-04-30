@@ -251,7 +251,7 @@ class WallpaperWorker(appContext: Context, workerParams: WorkerParameters) :
             }
         }
         
-        val nextDelay = 4L
+        val nextDelay = sharedPreferences.getLong("update_frequency_hours", 4L)
         val nextUnit = TimeUnit.HOURS
         
         sharedPreferences.edit()
@@ -261,6 +261,7 @@ class WallpaperWorker(appContext: Context, workerParams: WorkerParameters) :
             .putString("attribution_license_url", imageData.licenseUrl)
             .putString("attribution_description_url", imageData.descriptionUrl)
             .putInt("failure_count", 0)
+            .putLong("last_change_time", System.currentTimeMillis())
             .putLong("next_execution_time", System.currentTimeMillis() + nextUnit.toMillis(nextDelay))
             .apply()
 
@@ -344,27 +345,43 @@ class WallpaperWorker(appContext: Context, workerParams: WorkerParameters) :
         const val UNIQUE_WORK_NAME = "WallpaperChangeWork"
         
         fun startWork(context: Context) {
-            val requireWifi = context.getSharedPreferences("wallpaper_prefs", Context.MODE_PRIVATE)
-                .getBoolean("require_wifi", true)
+            val prefs = context.getSharedPreferences("wallpaper_prefs", Context.MODE_PRIVATE)
+            val requireWifi = prefs.getBoolean("require_wifi", true)
             val networkType = if (requireWifi) NetworkType.UNMETERED else NetworkType.CONNECTED
 
             val constraints = Constraints.Builder()
                 .setRequiredNetworkType(networkType)
                 .build()
 
-            val workRequest = OneTimeWorkRequestBuilder<WallpaperWorker>()
+            val lastChangeTime = prefs.getLong("last_change_time", 0L)
+            val currentTime = System.currentTimeMillis()
+            val minIntervalMillis = 5 * 60 * 1000L // 5 minutes
+
+            val timeSinceLastChange = currentTime - lastChangeTime
+            val delayMillis = if (lastChangeTime > 0 && timeSinceLastChange < minIntervalMillis) {
+                minIntervalMillis - timeSinceLastChange
+            } else {
+                0L
+            }
+
+            val workRequestBuilder = OneTimeWorkRequestBuilder<WallpaperWorker>()
                 .setConstraints(constraints)
                 .addTag(TAG)
-                .build()
+                
+            if (delayMillis > 0) {
+                workRequestBuilder.setInitialDelay(delayMillis, java.util.concurrent.TimeUnit.MILLISECONDS)
+            }
             
-            context.getSharedPreferences("wallpaper_prefs", Context.MODE_PRIVATE).edit()
-                .putLong("next_execution_time", System.currentTimeMillis()) // Immediate start
+            val workRequest = workRequestBuilder.build()
+            
+            prefs.edit()
+                .putLong("next_execution_time", currentTime + delayMillis)
                 .putInt("failure_count", 0)
                 .apply()
 
             WorkManager.getInstance(context).enqueueUniqueWork(
                 UNIQUE_WORK_NAME,
-                ExistingWorkPolicy.KEEP,
+                ExistingWorkPolicy.REPLACE,
                 workRequest
             )
         }

@@ -47,6 +47,41 @@
                 android:textSize="16sp" />
 
             <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="8dp"
+                android:text="Update Frequency"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <RadioGroup
+                android:id="@+id/update_frequency_group"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginBottom="16dp">
+
+                <RadioButton
+                    android:id="@+id/radio_freq_more"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="More frequent (2h)" />
+
+                <RadioButton
+                    android:id="@+id/radio_freq_default"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Default (4h)" />
+
+                <RadioButton
+                    android:id="@+id/radio_freq_less"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Less frequent (8h)" />
+            </RadioGroup>
+
+            <TextView
                 android:id="@+id/title_customize_text"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"

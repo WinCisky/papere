@@ -22,6 +22,23 @@ class CustomizeActivity : AppCompatActivity() {
         setupPreference(binding.checkboxAnimals, "checkbox_animals")
         setupPreference(binding.checkboxFlora, "checkbox_flora")
 
+        val prefs = getSharedPreferences("wallpaper_prefs", MODE_PRIVATE)
+        val currentFreq = prefs.getLong("update_frequency_hours", 4L)
+        when (currentFreq) {
+            2L -> binding.radioFreqMore.isChecked = true
+            8L -> binding.radioFreqLess.isChecked = true
+            else -> binding.radioFreqDefault.isChecked = true
+        }
+
+        binding.updateFrequencyGroup.setOnCheckedChangeListener { _, checkedId ->
+            val hours = when (checkedId) {
+                R.id.radio_freq_more -> 2L
+                R.id.radio_freq_less -> 8L
+                else -> 4L
+            }
+            prefs.edit().putLong("update_frequency_hours", hours).apply()
+        }
+
         binding.viewLogsButton.setOnClickListener {
             startActivity(Intent(this, LogActivity::class.java))
         }
