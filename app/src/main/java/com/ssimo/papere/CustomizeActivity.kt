@@ -16,11 +16,12 @@ class CustomizeActivity : AppCompatActivity() {
 
         setupPreference(binding.requireWifiSwitch, "require_wifi")
         setupPreference(binding.requireBatterySwitch, "require_battery")
-        setupPreference(binding.checkboxNature, "checkbox_nature")
-        setupPreference(binding.checkboxLandscapes, "checkbox_landscapes")
-        setupPreference(binding.checkboxSunsets, "checkbox_sunsets")
+
+        setupPreference(binding.checkboxSpace, "checkbox_space")
+        setupPreference(binding.checkboxObjects, "checkbox_objects")
         setupPreference(binding.checkboxAnimals, "checkbox_animals")
-        setupPreference(binding.checkboxFlora, "checkbox_flora")
+        setupPreference(binding.checkboxPlants, "checkbox_plants")
+        setupPreference(binding.checkboxPlaces, "checkbox_places")
 
         val prefs = getSharedPreferences("wallpaper_prefs", MODE_PRIVATE)
         val currentFreq = prefs.getLong("update_frequency_hours", 4L)

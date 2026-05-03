@@ -90,26 +90,26 @@
                 android:textSize="24sp"
                 android:textStyle="bold" />
 
-            <CheckBox android:id="@+id/checkbox_nature"
+            <CheckBox android:id="@+id/checkbox_space"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Nature" />
-            <CheckBox android:id="@+id/checkbox_landscapes"
+                android:text="Space" />
+            <CheckBox android:id="@+id/checkbox_objects"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Landscapes"/>
-            <CheckBox android:id="@+id/checkbox_sunsets"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Sunsets"/>
+                android:text="Objects"/>
             <CheckBox android:id="@+id/checkbox_animals"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Animals"/>
-            <CheckBox android:id="@+id/checkbox_flora"
+            <CheckBox android:id="@+id/checkbox_plants"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Flora"/>
+                android:text="Plants"/>
+            <CheckBox android:id="@+id/checkbox_places"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Places"/>
 
             <Button
                 android:id="@+id/view_logs_button"
