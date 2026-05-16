@@ -34,6 +34,9 @@ class WallpaperWorker(appContext: Context, workerParams: WorkerParameters) :
                 .build()
             chain.proceed(request)
         }
+        .connectTimeout(30, TimeUnit.SECONDS)
+        .readTimeout(60, TimeUnit.SECONDS)
+        .writeTimeout(30, TimeUnit.SECONDS)
         .build()
 
     override suspend fun doWork(): Result {
@@ -45,8 +48,8 @@ class WallpaperWorker(appContext: Context, workerParams: WorkerParameters) :
         val requireBattery = sharedPreferences.getBoolean("require_battery", true)
 
         if ((requireWifi && !wifiConnected) || (requireBattery && batteryLevel <= 50)) {
-            Logger.log(applicationContext, TAG, "Conditions not met: WiFi=$wifiConnected (Required: $requireWifi), Battery=$batteryLevel% (Required: $requireBattery). Postponing for 15m.")
-            scheduleAndSaveNext(15L, TimeUnit.MINUTES)
+            Logger.log(applicationContext, TAG, "Conditions not met: WiFi=$wifiConnected (Required: $requireWifi), Battery=$batteryLevel% (Required: $requireBattery). Postponing for 5m.")
+            scheduleAndSaveNext(5L, TimeUnit.MINUTES)
             return Result.success()
         }
 
@@ -303,9 +306,9 @@ class WallpaperWorker(appContext: Context, workerParams: WorkerParameters) :
         Logger.log(applicationContext, TAG, "Handling failure. Failure count: $newCount")
 
         if (newCount < 3) {
-            Logger.log(applicationContext, TAG, "Retrying in 15 minutes.")
+            Logger.log(applicationContext, TAG, "Retrying in 5 minutes.")
             sharedPreferences.edit().putInt("failure_count", newCount).apply()
-            scheduleAndSaveNext(15L, TimeUnit.MINUTES)
+            scheduleAndSaveNext(5L, TimeUnit.MINUTES)
         } else {
             sharedPreferences.edit()
                 .putInt("failure_count", newCount)

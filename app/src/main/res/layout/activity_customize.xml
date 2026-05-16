@@ -102,6 +102,10 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Animals"/>
+            <CheckBox android:id="@+id/checkbox_insects"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Insects"/>
             <CheckBox android:id="@+id/checkbox_plants"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"

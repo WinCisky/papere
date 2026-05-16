@@ -20,6 +20,7 @@ class CustomizeActivity : AppCompatActivity() {
         setupPreference(binding.checkboxSpace, "checkbox_space")
         setupPreference(binding.checkboxObjects, "checkbox_objects")
         setupPreference(binding.checkboxAnimals, "checkbox_animals")
+        setupPreference(binding.checkboxInsects, "checkbox_insects", defaultValue = false)
         setupPreference(binding.checkboxPlants, "checkbox_plants")
         setupPreference(binding.checkboxPlaces, "checkbox_places")
 
